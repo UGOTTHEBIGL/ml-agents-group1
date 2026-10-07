@@ -58,7 +58,7 @@ Windows and Linux: not yet tested.
 
 ### Known problems
 
-| Symptom | Fix |
+| Problem | Fix |
 |---|---|
 | `Package requires a different Python: 3.10.20 not in '<=3.10.12,>=3.10.1'` | `conda install -c conda-forge python=3.10.12` |
 | `No module named 'pkg_resources'` | `python -m pip install "setuptools<81"` |
