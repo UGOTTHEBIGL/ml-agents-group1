@@ -94,4 +94,19 @@ venv/
 coverage.xml
 /htmlcov/
 
+# Unity artifacts
+/Library/
+/Logs/
+/Packages/
+/ProjectSettings/
+/UserSettings/
+
+# Per-machine Unity editor settings
+/Project/ProjectSettings/MemorySettings.asset
+/Project/ProjectSettings/PackageManagerSettings.asset
+/Project/ProjectSettings/VersionControlSettings.asset
 **/UserSettings/*
+
+# Local build and run outputs
+/builds/
+/results/
