@@ -108,5 +108,5 @@ coverage.xml
 **/UserSettings/*
 
 # Local build and run outputs
-/builds/
 /results/
+/aiml1/builds/
