@@ -8,7 +8,7 @@ python -m pip install psutil "torch==2.8.0" "protobuf==3.20.1"
 
 In Unity open the project and build the envronment you want to use, for example with 3dBall - open the scene of the game you want, for example -  Assets/ML-Agents/Examples/3DBall/Scenes/3DBall,
 click Project Settings -> Player -> Run In Background,
-then File -> Build Settings -> your OS, Apple silicon → Add Open Scenes → Build
+then File -> Build Settings -> your OS → Add Open Scenes → Build
 and save it in aiml1/conifgs
 
 ## Configs
