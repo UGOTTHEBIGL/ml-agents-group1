@@ -10,22 +10,66 @@ from mlagents_envs.base_env import ActionTuple
 def random_actions(specs, n_agents, rng):
     continuous = rng.uniform(-1.0, 1.0, size=(n_agents, specs.continuous_size))
     discrete = np.zeros((n_agents, specs.discrete_size), dtype=np.int32)
-    #TODO implement for discrete games
+    for i, branch_size in enumerate(specs.discrete_branches):
+        discrete[:, i] = rng.integers(0, branch_size, size=n_agents)
     return ActionTuple(continuous=continuous, discrete=discrete)
 
-def random_steps(env, behavior, n_steps, rng):
+def random_steps(env, behavior, n_steps, rng, n_episodes):
     specs = env.behavior_specs[behavior].action_spec
     n_terminal_total = 0
+    episode_rewards = {}
+    completed_episodes = []
+    episode_counts = {}
+    n_interrupted = 0
+    initial_decision, initial_terminal = env.get_steps(behavior)
+    agent_ids = list(initial_decision.agent_id)
+    n_agents = len(agent_ids)
+    print(f"Agents found: {n_agents}")
+    print(f"Agent IDs: {agent_ids}")
+    if n_agents == 0:
+        raise ValueError("No agents found")
+
+    base = n_episodes // n_agents
+    reminder = n_episodes % n_agents
+
+    episode_targets = {}
+
+    for i, agent_id in enumerate(agent_ids):
+        episode_targets[agent_id] = base + (1 if i < reminder else 0)
+
     for t in range(n_steps):
         decision, terminal = env.get_steps(behavior)
+        n_interrupted += np.count_nonzero(terminal.interrupted)
+        for agent_id, reward in zip(terminal.agent_id, terminal.reward):
+            if agent_id not in episode_targets:
+                raise RuntimeError(f"Unexpected agent ID: {agent_id}")
+            total_reward = episode_rewards.get(agent_id, 0.0) + reward
+
+            if episode_counts.get(agent_id, 0) < episode_targets[agent_id]:
+                completed_episodes.append(total_reward)
+                episode_counts[agent_id] = episode_counts.get(agent_id, 0) + 1
+
+            episode_rewards[agent_id] = 0.0
+
+        for agent_id, reward in zip(decision.agent_id, decision.reward):
+            episode_rewards[agent_id] = (
+                episode_rewards.get(agent_id, 0.0) + reward
+            )
+
         n_terminal_total += len(terminal)
+
+        if len(completed_episodes) >= n_episodes:
+            break
+    
         if t < 5 or len(terminal) > 0:
             print(t, "Decision: ", len(decision), "Terminal: ", len(terminal),
                   "Reward sum: ", decision.reward.sum() + terminal.reward.sum())
         if len(decision) > 0:
             env.set_actions(behavior, random_actions(specs, len(decision), rng))
         env.step()
+    return completed_episodes
     print(f"Terminal steps seen in {n_steps} steps: {n_terminal_total}")
+    print(f"Interrupted episodes: {n_interrupted}")
 
 def main():
     # parsing settings (define arguments)
@@ -33,7 +77,14 @@ def main():
     parser.add_argument("--env", required=True, help="Path to the unity build (e.g. builds/3DBall/3DBall.exe)")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--base-port", type=int, default=5200)
+    parser.add_argument("--episodes", type=int, default=100)
+    parser.add_argument("--max-steps", type=int, default=100000)
     args = parser.parse_args()
+    if args.episodes <= 0:
+        parser.error("--episodes must be greater than 0")
+
+    if args.max_steps <= 0:
+        parser.error("--max-steps must be greater than 0")
 
     if not Path(args.env).exists():
         sys.exit(f"Build not found: {args.env}")
@@ -53,7 +104,15 @@ def main():
             sys.exit(f"Expected exactly 1 behaviour, but found {len(names)}")
 
         rng = np.random.default_rng(args.seed)
-        random_steps(env, names[0], 300, rng)
+        rewards = random_steps(env, names[0], args.max_steps, rng, args.episodes)
+
+        if len(rewards) < args.episodes:
+            raise RuntimeError(
+                f"Only {len(rewards)} of {args.episodes} episodes completed"
+       )
+
+        r_random = np.mean(rewards)
+        print(f"R_random: {r_random:.4f}")
 
     
     finally:
