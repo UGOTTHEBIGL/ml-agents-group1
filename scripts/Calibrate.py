@@ -30,22 +30,22 @@ def random_steps(env, behavior, n_steps, rng, n_episodes):
         raise ValueError("No agents found")
 
     base = n_episodes // n_agents
-    reminder = n_episodes % n_agents
+    remainder = n_episodes % n_agents
 
     episode_targets = {}
 
     for i, agent_id in enumerate(agent_ids):
-        episode_targets[agent_id] = base + (1 if i < reminder else 0)
+        episode_targets[agent_id] = base + (1 if i < remainder else 0)
 
     for t in range(n_steps):
         decision, terminal = env.get_steps(behavior)
-        n_interrupted += np.count_nonzero(terminal.interrupted)
         for agent_id, reward in zip(terminal.agent_id, terminal.reward):
             if agent_id not in episode_targets:
                 raise RuntimeError(f"Unexpected agent ID: {agent_id}")
             total_reward = episode_rewards.get(agent_id, 0.0) + reward
 
             if episode_counts.get(agent_id, 0) < episode_targets[agent_id]:
+                n_interrupted += np.count_nonzero(terminal.interrupted)
                 completed_episodes.append(total_reward)
                 episode_counts[agent_id] = episode_counts.get(agent_id, 0) + 1
 
@@ -61,15 +61,15 @@ def random_steps(env, behavior, n_steps, rng, n_episodes):
         if len(completed_episodes) >= n_episodes:
             break
     
-        if t < 5 or len(terminal) > 0:
+        if t < 5:
             print(t, "Decision: ", len(decision), "Terminal: ", len(terminal),
                   "Reward sum: ", decision.reward.sum() + terminal.reward.sum())
         if len(decision) > 0:
             env.set_actions(behavior, random_actions(specs, len(decision), rng))
         env.step()
-    return completed_episodes
-    print(f"Terminal steps seen in {n_steps} steps: {n_terminal_total}")
+    print(f"Terminal steps seen in {t + 1} steps: {n_terminal_total}")
     print(f"Interrupted episodes: {n_interrupted}")
+    return completed_episodes
 
 def main():
     # parsing settings (define arguments)
@@ -111,8 +111,20 @@ def main():
                 f"Only {len(rewards)} of {args.episodes} episodes completed"
        )
 
-        r_random = np.mean(rewards)
-        print(f"R_random: {r_random:.4f}")
+
+        rewards = np.array(rewards)
+        n = len(rewards)
+        mean = rewards.mean()
+        std = rewards.std(ddof=1) if n > 1 else 0.0
+        sem = std / np.sqrt(n)
+        behavior = names[0].split("?")[0]
+
+        print(f"Behaviour: {behavior} seed: {args.seed} episodes: {n}")
+        print(f"Episode reward: mean {mean:.4f} std {std:.4f} sem {sem:.4f} "
+              f"min {rewards.min():.4f} max {rewards.max():.4f}")
+        print(f"R_random: {mean:.4f}")
+
+        print(f"{behavior}:\n random_reward: {mean:.4f}")
 
     
     finally:
