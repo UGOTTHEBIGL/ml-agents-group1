@@ -16,6 +16,7 @@ def random_actions(specs, n_agents, rng):
 
 def random_steps(env, behavior, n_steps, rng, n_episodes):
     specs = env.behavior_specs[behavior].action_spec
+    print(f"continuous: {specs.continuous_size}  discrete branches: {specs.discrete_branches}")
     n_terminal_total = 0
     episode_rewards = {}
     completed_episodes = []
@@ -39,15 +40,16 @@ def random_steps(env, behavior, n_steps, rng, n_episodes):
 
     for t in range(n_steps):
         decision, terminal = env.get_steps(behavior)
-        for agent_id, reward in zip(terminal.agent_id, terminal.reward):
+        for agent_id, reward, interrupted in zip(terminal.agent_id, terminal.reward, terminal.interrupted):
             if agent_id not in episode_targets:
                 raise RuntimeError(f"Unexpected agent ID: {agent_id}")
             total_reward = episode_rewards.get(agent_id, 0.0) + reward
 
             if episode_counts.get(agent_id, 0) < episode_targets[agent_id]:
-                n_interrupted += np.count_nonzero(terminal.interrupted)
                 completed_episodes.append(total_reward)
                 episode_counts[agent_id] = episode_counts.get(agent_id, 0) + 1
+                n_interrupted += int(interrupted)
+
 
             episode_rewards[agent_id] = 0.0
 
