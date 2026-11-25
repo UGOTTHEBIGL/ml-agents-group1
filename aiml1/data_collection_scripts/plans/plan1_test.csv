@@ -1,0 +1,4 @@
+,trainer_type,batch_size,buffer_size,learning_rate,beta,epsilon,lambd,num_epoch,learning_rate_schedule,normalize,hidden_units,num_layers,vis_encode_type,gamma,strength,keep_checkpoints,max_steps,time_horizon,summary_freq
+0,ppo,32,10000,0.00384,0.0045,0.483,0.9929,3,linear,True,32,3,nature_cnn,0.9728,1.551,10,200000,128,10000
+1,ppo,80,8000,0.0052,0.0082,0.141,0.9973,2,linear,True,32,2,simple,0.9603,0.574,3,300000,256,20000
+2,ppo,64,8000,0.00799,0.0064,0.414,0.9087,3,linear,True,96,1,simple,0.9614,1.771,10,100000,128,5000

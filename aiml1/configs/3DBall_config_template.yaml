@@ -1,0 +1,25 @@
+behaviors:
+  3DBall:
+    trainer_type: null
+    hyperparameters:
+      batch_size: null
+      buffer_size: null
+      learning_rate: null
+      beta: null
+      epsilon: null
+      lambd: null
+      num_epoch: null
+      learning_rate_schedule: null
+    network_settings:
+      normalize: null
+      hidden_units: null
+      num_layers: null
+      vis_encode_type: null
+    reward_signals:
+      extrinsic:
+        gamma: null
+        strength: null
+    keep_checkpoints: null
+    max_steps: null
+    time_horizon: null
+    summary_freq: null
