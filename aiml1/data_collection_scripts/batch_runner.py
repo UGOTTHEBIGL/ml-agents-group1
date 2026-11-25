@@ -3,6 +3,22 @@ import sys
 import time
 from datetime import datetime
 
+"""
+Runs run_once.py multiple times.
+How to use:
+----------
+python aiml1/data_collection_scripts/batch_runner.py <config> <env> <prefix> [start_num] [count]
+
+Example - run 10 tests starting from test_001:
+python aiml1/data_collection_scripts/batch_runner.py aiml1/configs/3DBall_ppo.yaml aiml1/builds/3DBall.exe test 1 10
+
+Example - run 5 more runs starting from test_011:
+python aiml1/data_collection_scripts/batch_runner.py aiml1/configs/3DBall_ppo.yaml aiml1/builds/3DBall.exe test 11 5
+
+If a test id is taken, it will jump to the next automatically.
+You can stop anytime with Ctrl+C. Already finished runs will stay logged in the CSV.
+"""
+
 def run_one(config, env, run_id):
     cmd = [
         "python", "aiml1/data_collection_scripts/run_once.py",
