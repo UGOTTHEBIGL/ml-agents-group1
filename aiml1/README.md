@@ -35,3 +35,16 @@ aiml1/
 ├── data/                     
 └── data_collection_scripts/  
 ```
+
+## Run a Batch
+
+
+To create a new random plan where x is the number of runs:
+```bash
+python -c "from aiml1.data_collection_scripts.manage_plan import createCSV; createCSV(x)"
+```
+
+To run plan number y:
+```bash
+python -c "from aiml1.data_collection_scripts.manage_plan import runPlan; runPlan(plan_num=y)"
+```

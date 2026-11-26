@@ -92,12 +92,12 @@ def createTempDict(config_template : dict, plan : pd.Series):
             createTempDict(config_template[key], plan)
 
 #calls run_once.py for each plan entry. calls entire thing each time because idk how to reset enviroment
-def runPlan(plan_path=PLANS, plan_name="plan1_test.csv"):
-    plan = pd.read_csv(plan_path+'/'+plan_name)
+def runPlan(plan_num=1):
+    plan = pd.read_csv(PLANS+"/plan"+str(plan_num)+".csv")
     temp = template
     for run, plan_row in plan.iterrows():
         createTempDict(temp, plan_row)
-        with open(TEMPORARY_YAML, 'w') as outfile: yaml.dump(temp, outfile, default_flow_style=False)
+        with open(TEMPORARY_YAML, 'w') as outfile: yaml.dump(temp, outfile, default_flow_style=False, sort_keys=False)
         subprocess.run(["python", "aiml1/data_collection_scripts/run_once.py", TEMPORARY_YAML, "aiml1/builds/3DBall.exe", "plan_1_"+"run_"+str(run)])
 
 
