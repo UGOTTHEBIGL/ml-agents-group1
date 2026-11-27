@@ -10,6 +10,12 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 
 REWARD_TAG = "Environment/Cumulative Reward"
 OUT_CSV = "aiml1/data/runs.csv"
+SEED = 0
+COLUMNS = ["run_id", "status", "env_name", "algorithm", "os", "cpu", "cores", "ram_total_gib",
+           "learning_rate", "batch_size", "buffer_size", "beta", "epsilon", "lambd", "num_epoch",
+           "tau", "steps_per_update", "init_entcoef", "hidden_units", "num_layers",
+           "max_steps", "summary_freq", "normalize", "gamma", "strength", "time_horizon",
+           "seed", "time_s", "ram_peak_mib", "final_reward"]
 
 
 def main():
@@ -17,11 +23,18 @@ def main():
     env_file = sys.argv[2]
     run_id = sys.argv[3]
 
+    # check CSV columns before training so a mismatch fails right away instead of wasting a training run
+    if os.path.exists(OUT_CSV):
+        with open(OUT_CSV, "r", newline="") as f:
+            header = next(csv.reader(f), [])
+        if header != COLUMNS:
+            sys.exit(OUT_CSV + " has different columns")    
+
     if os.path.exists("results/" + run_id):
         sys.exit("run_id " + run_id + " already used")
 
     # command to run mlagents-learn
-    cmd = ["mlagents-learn", config_file, "--env=" + env_file, "--run-id=" + run_id, "--no-graphics"]
+    cmd = ["mlagents-learn", config_file, "--env=" + env_file, "--run-id=" + run_id, "--no-graphics", "--seed=" + str(SEED)]
     start_time = time.time()
     # starting a child proccess directly from python script, so we can monitor the ram
     process = subprocess.Popen(cmd)
@@ -72,6 +85,7 @@ def main():
 
     hp = settings.get("hyperparameters", {})
     net = settings.get("network_settings", {})
+    ext = settings.get("reward_signals", {}).get("extrinsic", {})
 
     # final reward = average of the last 10%
     final_reward = None
@@ -126,6 +140,11 @@ def main():
         "num_layers": net.get("num_layers"),
         "max_steps": settings.get("max_steps"),
         "summary_freq": settings.get("summary_freq"),
+        "normalize": net.get("normalize"),
+        "gamma": ext.get("gamma"),
+        "strength": ext.get("strength"),
+        "time_horizon": settings.get("time_horizon"),        
+        "seed": SEED, 
         "time_s": round(seconds, 1),
         "ram_peak_mib": peak_ram_mib,
         "final_reward": final_reward,
@@ -137,13 +156,6 @@ def main():
 
     file_exists = os.path.exists(OUT_CSV)
 
-    # check for different columns if we are adding rows to an existing CSV
-    if file_exists:
-        with open(OUT_CSV, "r", newline="") as f:
-            header = next(csv.reader(f), [])
-        if header != list(row.keys()):
-            sys.exit(OUT_CSV + " has different columns")
-
     with open(OUT_CSV, "a", newline="") as f:
         columns = list(row.keys())
         writer = csv.DictWriter(f, fieldnames=columns)
@@ -153,6 +165,10 @@ def main():
         writer.writerow(row)
 
     print(row)
+
+    # makes sure manage_plan can see it failed instead of exit code 0
+    if status != "completed":
+        sys.exit(1)
 
 
 if __name__ == "__main__":

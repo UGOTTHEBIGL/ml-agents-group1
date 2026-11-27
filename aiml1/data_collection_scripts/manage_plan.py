@@ -12,6 +12,7 @@ import random as rand
 import numpy as np
 import pandas as pd
 import subprocess
+import sys
 
 from pathlib import Path
 
@@ -98,7 +99,10 @@ def runPlan(plan_num=1):
     for run, plan_row in plan.iterrows():
         createTempDict(temp, plan_row)
         with open(TEMPORARY_YAML, 'w') as outfile: yaml.dump(temp, outfile, default_flow_style=False, sort_keys=False)
-        subprocess.run(["python", "aiml1/data_collection_scripts/run_once.py", TEMPORARY_YAML, "aiml1/builds/3DBall.exe", "plan_1_"+"run_"+str(run)])
+        # track the result of the training, success or fail
+        result = subprocess.run([sys.executable, "aiml1/data_collection_scripts/run_once.py", TEMPORARY_YAML, "aiml1/builds/3DBall.exe", "plan_" + str(plan_num) + "_run_" + str(run)])
+        if result.returncode != 0: # anything other than 0 means training failed
+            print("plan_" + str(plan_num) + "_run_" + str(run) + " failed") # shows you which
 
 
 #python aiml1\data_collection_scripts\manage_plan.py to run whatever is in here
